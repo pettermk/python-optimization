@@ -44,19 +44,7 @@ def main():
     plt.imshow(np.log(image3))
     plt.show()
     
-def circlecost(inputimage, x, y, radius):
-    outersum = 0
-    innersum = 0
-    for i in range(x - radius, x + radius, 1):
-        for j in range(y - radius, y + radius, 1):
-            local_radius = sqrt(pow(i - x, 2) + pow(j - y, 2))
-            if local_radius > 2 * radius:
-                continue
-            if local_radius > radius:
-                outersum += pow(inputimage[i, j], 2)
-            if local_radius <=  radius:
-                innersum += pow(inputimage[i, j], 2)
-    return outersum / innersum
+
     
 if __name__ == "__main__":
     main()
