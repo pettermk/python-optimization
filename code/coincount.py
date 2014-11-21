@@ -16,7 +16,7 @@ def circlecost(x, *inputimage):
     #inputimage = np.asarray(inputimage[0]) if len(inputimage) == 1 else np.asarray(inputimage)
     inputimage = list(inputimage)
     size_x = len(inputimage)
-    size_y = floor(size(inputimage) / size_x)
+    size_y = len(inputimage[0])
     x = [x[0]*size_x, x[1]*size_y, x[2]*max(size_x, size_y)]
     outersum = 0
     outercount = 0
@@ -39,17 +39,19 @@ def circlecost(x, *inputimage):
             if j >= size_y:
                 continue
             local_radius = sqrt(i_squared + j_pow[n])
+            #if local_radius > x[2]:
+            #    continue
             n +=1
             if local_radius > x[2]:
-                outersum += pow(inputimage[i][j], 2)
+                outersum += inputimage[i][j]
                 outercount +=1
             if local_radius <=  x[2]:
-                innersum += pow(inputimage[i][j], 2)
+                innersum += inputimage[i][j]
                 innercount += 1
     if outercount == 0 or innercount == 0:
         return 1000
 
-    return (outersum/outercount) / (innersum/innercount)
+    return -(innersum/innercount -outersum/outercount)
     
 def circlecost_gradient(x, *inputimage):
     inputimage2 = np.asarray(inputimage[0]) if len(inputimage) == 1 else np.asarray(inputimage)
@@ -86,17 +88,21 @@ def main():
     coins2 = drawcircle(coins, x_opt[0], x_opt[1], x_opt[2])
     x_opt = fmin(circlecost, [0.2, 0.2, 0.1], args=totuple(coins2)) 
     coins3 = drawcircle(coins2, x_opt[0], x_opt[1], x_opt[2])
-    x_opt = fmin(circlecost, [0.5, 0.5, 0.1], args=totuple(coins3)) 
+    x_opt = fmin(circlecost, [0.3, 0.8, 0.1], args=totuple(coins3)) 
     coins4 = drawcircle(coins3, x_opt[0], x_opt[1], x_opt[2])
     x_opt = fmin(circlecost, [0.8, 0.8, 0.1], args=totuple(coins4)) 
     coins5 = drawcircle(coins4, x_opt[0], x_opt[1], x_opt[2])
-    x_opt = fmin(circlecost, [0.3, 0.6, 0.1], args=totuple(coins5)) 
+    x_opt = fmin(circlecost, [0.7, 0.4, 0.1], args=totuple(coins5)) 
     coins6 = drawcircle(coins5, x_opt[0], x_opt[1], x_opt[2])
-    #minimizer_kwargs = {'method' : 'Nelder-Mead', 'args' : totuple(coins3)}
-    #result = basinhopping(circlecost, [0.4, 0.7, 0.1], minimizer_kwargs=minimizer_kwargs)
-    #x_opt = result.x
-    #coins4 = drawcircle(coins, x_opt[0], x_opt[1], x_opt[2])
-    imshow(coins6)
+    x_opt = fmin(circlecost, [0.7, 0.4, 0.1], args=totuple(coins6)) 
+    coins7 = drawcircle(coins6, x_opt[0], x_opt[1], x_opt[2])
+    #x_opt = fmin(circlecost, [0.7, 0.4, 0.1], args=totuple(coins7)) 
+    #coins8 = drawcircle(coins7, x_opt[0], x_opt[1], x_opt[2])
+    minimizer_kwargs = {'method' : 'Nelder-Mead', 'args' : totuple(coins7)}
+    result = basinhopping(circlecost, [0.4, 0.7, 0.1], minimizer_kwargs=minimizer_kwargs)
+    x_opt = result.x
+    coins8 = drawcircle(coins7, x_opt[0], x_opt[1], x_opt[2])
+    imshow(coins8)
         
 if __name__ == "__main__":
     main()
