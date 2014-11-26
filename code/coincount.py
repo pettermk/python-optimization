@@ -13,7 +13,15 @@ from scipy.optimize import fmin, fmin_cg, fmin_bfgs, fmin_ncg, basinhopping
 from math import sqrt, floor
 
 def circlecost(x, *inputimage):
-    #inputimage = np.asarray(inputimage[0]) if len(inputimage) == 1 else np.asarray(inputimage)
+    #result = circlecost_helper(x, inputimage)
+    innervalue, outervalue = circlecost_helper(x, inputimage)
+    return -(innervalue - outervalue)
+    
+def circlecost_outermean(x, inputimage):
+    innermean, outermean = circlecost_helper(x, inputimage)
+    return outermean    
+    
+def circlecost_helper(x, inputimage):
     inputimage = list(inputimage)
     size_x = len(inputimage)
     size_y = len(inputimage[0])
@@ -23,9 +31,9 @@ def circlecost(x, *inputimage):
     innersum = 0
     innercount = 0
     if x[0] < x[2] or x[0] > size_x- x[2]:
-        return 1000
+        return 0, 1000
     if x[1] < x[2] or x[1] > size_y - x[2]:
-        return 1000
+        return 0, 1000
     j_pow = []
     for k in range(floor(x[1] - x[2]), floor(x[1] + x[2]), 1):
         j_pow.append(pow(k - x[1], 2))
@@ -49,9 +57,9 @@ def circlecost(x, *inputimage):
                 innersum += inputimage[i][j]
                 innercount += 1
     if outercount == 0 or innercount == 0:
-        return 1000
-
-    return -(innersum/innercount -outersum/outercount)
+        return 0, 1000
+        
+    return innersum/innercount, outersum/outercount
     
 def circlecost_gradient(x, *inputimage):
     inputimage2 = np.asarray(inputimage[0]) if len(inputimage) == 1 else np.asarray(inputimage)
@@ -66,24 +74,44 @@ def circlecost_gradient(x, *inputimage):
     
     return [deltax / df_x, deltay /df_y, deltar / df_r]
     
-def drawcircle(inputimage, x, y, radius):
+def drawcircle(inputimage, x, y, radius, new_value):
+    outputimage = inputimage.copy()
     x = floor(x*inputimage.shape[0])
     y = floor(y*inputimage.shape[1])
     radius = round(radius* max(inputimage.shape))
     xx, yy = np.mgrid[:inputimage.shape[0], :inputimage.shape[1] ]
     index = (xx-x)**2 + (yy-y)**2 <= radius**2
-    inputimage[index]=0
-    return inputimage
+    outputimage[index]=new_value
+    return outputimage
 
 def totuple(a):
     try:
         return tuple(totuple(i) for i in a)
     except TypeError:
         return a
+        
+def removecoin(inputimage, startguess=[0.5, 0.5, 0.1], method='local'):
+    if method == 'local':
+        x_opt = fmin(circlecost, [0.4, 0.7, 0.1], args=totuple(inputimage))
+        print(x_opt)
+        outermean = circlecost_outermean(x_opt, totuple(inputimage))
+        outputimage = drawcircle(inputimage, x_opt[0], x_opt[1], x_opt[2], 0)
+
+    if method == 'global':
+        minimizer_kwargs = {'method' : 'Nelder-Mead', 'args' : totuple(inputimage)}
+        result = basinhopping(circlecost, [0.4, 0.7, 0.1], 
+                              minimizer_kwargs=minimizer_kwargs)
+        x_opt = result.x
+        print(x_opt)
+        outermean = circlecost_outermean(x_opt, totuple(inputimage))
+        outputimage = drawcircle(inputimage, x_opt[0], x_opt[1], x_opt[2], 0)
+        
+    imshow(outputimage)        
+    return outputimage
 
 def main():
     coins = imread('Images/coins.png')
-    x_opt = fmin(circlecost, [0.4, 0.7, 0.1], args=totuple(coins))        
+    """x_opt = fmin(circlecost, [0.4, 0.7, 0.1], args=totuple(coins))        
     print(x_opt)
     coins2 = drawcircle(coins, x_opt[0], x_opt[1], x_opt[2])
     x_opt = fmin(circlecost, [0.2, 0.2, 0.1], args=totuple(coins2)) 
@@ -102,7 +130,7 @@ def main():
     result = basinhopping(circlecost, [0.4, 0.7, 0.1], minimizer_kwargs=minimizer_kwargs)
     x_opt = result.x
     coins8 = drawcircle(coins7, x_opt[0], x_opt[1], x_opt[2])
-    imshow(coins8)
+    imshow(coins8)"""
         
 if __name__ == "__main__":
     main()

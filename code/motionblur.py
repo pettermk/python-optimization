@@ -5,9 +5,11 @@ Created on Thu May 29 11:04:41 2014
 """
 
 from scipy.ndimage import rotate
-from scipy.ndimage.filters import convolve
-from scipy.misc import lena
-from scipy.fftpack import fft2, fftshift
+#from scipy.ndimage.filters import convolve
+from scipy.fftpack import fft2, fftshift, ifft2, ifftshift
+from skimage.color import rgb2gray
+from skimage.restoration import richardson_lucy, unsupervised_wiener
+from skimage.data import lena
 import numpy as np
 #from numpy import zeros, ones
 from math import floor, pow, sqrt
@@ -22,13 +24,57 @@ def motionblur(size, angle):
     psf = np.zeros([size, size])
     psf[middle_row, :] = np.ones([1, size])
     psf = rotate(psf, angle, reshape=False)
+    psf = psf/sum(psf)
     return psf
+    
+def blurimage(image, length, angle, plot=True):
+    motionpsf = motionblur(length, angle)
+    blurred = convolve2d(image, motionpsf, 'same')
+    blurred += 0.1 * blurred.std() * np.random.standard_normal(blurred.shape)
+    plt.imshow(blurred)
+    return blurred
+    
+def deblurimage(image, length, angle, plot=True):
+    motionpsf = motionblur(length, angle)
+    deblurred, _ = unsupervised_wiener(image, motionpsf)
+    plt.imshow(deblurred, vmin=deblurred.min(), vmax=deblurred.max())
+    return deblurred
+
+def fftdeblurimage(image, length, angle, plot=True):
+    psf = motionblur(length, angle)
+    diff = len(image) - len(psf)
+    xpad = (diff // 2)
+    ypad = xpad + diff % 2
+    psf = np.pad(psf,((xpad, ypad), (xpad, ypad)), 'constant', constant_values=(0,0))
+    fftpsf = fft2(psf)
+    fftinput = fft2(image)
+    fftresult = fftinput / fftpsf
+    result = fftshift(abs(ifft2(fftresult)))
+    if plot == True:
+        plt.imshow(result)
+    
+    return result
+    
+def fftblurimage(image, length, angle, plot=True):
+    psf = motionblur(length, angle)
+    diff = len(image) - len(psf)
+    xpad = (diff // 2)
+    ypad = xpad + diff % 2
+    psf = np.pad(psf,((xpad, ypad), (xpad, ypad)), 'constant', constant_values=(0,0) )
+    fftpsf = fft2(psf)
+    fftinput = fft2(image)
+    fftresult = fftinput * fftpsf
+    result = fftshift(abs(ifft2(fftresult)))
+    if plot == True:
+        plt.imshow(result)
+    
+    return result
 
 def main():
     image = lena()
     #imshow(image)
     
-    motionpsf = motionblur(15, 60)
+    """motionpsf = motionblur(15, 60)
     blurred = convolve(image, motionpsf)
     
     #Window the blurred image
@@ -42,7 +88,7 @@ def main():
 
     #imshow(blurred)
     plt.imshow(np.log(image3))
-    plt.show()
+    plt.show()"""
     
 
     
