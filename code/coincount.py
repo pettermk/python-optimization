@@ -19,7 +19,7 @@ from math import sqrt, floor
 
 def circlecost(x, inputimage):
     #result = circlecost_helper(x, inputimage)
-    # print(inputimage.__dict__)
+    # print(type(inputimage[0][0]))
     # print(inputimage.ndim)
     return cost_function(x, inputimage)
     innervalue, outervalue = circlecost_helper(x, inputimage)
@@ -35,9 +35,6 @@ def circlecost_outermean(x, inputimage):
 #@jit(float64(int32[:], int8[:,:]))
 @jit
 def circlecost_helper(x, inputimage):
-    print(type(x))
-    print(type(inputimage))
-    #inputimage = list(inputimage)
     size_x = len(inputimage)
     size_y = len(inputimage[0])
     x = [x[0]*size_x, x[1]*size_y, x[2]*max(size_x, size_y)]
@@ -89,16 +86,6 @@ def circlecost_gradient(x, *inputimage):
     
     return [deltax / df_x, deltay /df_y, deltar / df_r]
     
-def drawcircle(inputimage, x, y, radius, new_value=30):
-    outputimage = inputimage.copy()
-    x = floor(x*inputimage.shape[0])
-    y = floor(y*inputimage.shape[1])
-    radius = round(radius* max(inputimage.shape))
-    xx, yy = np.mgrid[:inputimage.shape[0], :inputimage.shape[1] ]
-    index = (xx-x)**2 + (yy-y)**2 <= radius**2
-    outputimage[index]=new_value
-    return outputimage
-
 def totuple(a):
     try:
         return tuple(totuple(i) for i in a)
@@ -124,19 +111,29 @@ def removecoin(inputimage, startguess=[0.5, 0.5, 0.1], method='local'):
     imshow(outputimage)        
     return outputimage
 
+def drawcircle(inputimage, x, y, radius, new_value=30):
+    outputimage = inputimage.copy()
+    x = floor(x*inputimage.shape[0])
+    y = floor(y*inputimage.shape[1])
+    radius = round(radius* max(inputimage.shape))
+    xx, yy = np.mgrid[:inputimage.shape[0], :inputimage.shape[1] ]
+    index = (xx-x)**2 + (yy-y)**2 <= radius**2
+    outputimage[index]=new_value
+    return outputimage
+
 def main():
     coins = imread('Images/coins.png')
     cost = 0
     found_coins = -1
-    while cost < 0.4 and found_coins < 0:
-        print(coins)
-        x_opt = fmin(circlecost, [0.4, 0.7, 0.1], args=(coins,))
-        # x_opt = differential_evolution(circlecost, bounds=[(0,1), (0,1), (0.01,0.2)], args=(coins,))
-        #                                 #minimizer_kwargs={'args':(coins,),
-        #                                 #                  'method': 'Nelder-Mead'})
-        #x_opt = minimize(circlecost, [0.5, 0.5, 0.1], args=(coins,),
-        #                 method='COBYLA', bounds=[(0,1), (0,1), (0.01,0.2)],
-        #                 options={'rhobeg':[0.1, 0.1, 0.05]})
+    while cost < 0.4 and found_coins < 9:
+        #print(coins)
+        # x_opt = fmin(circlecost, [0.4, 0.7, 0.1], args=(coins,))
+        x_opt = differential_evolution(circlecost, bounds=[(0,1), (0,1), (0.01,0.2)], args=(coins,))
+                                        #minimizer_kwargs={'args':(coins,),
+                                        #                  'method': 'Nelder-Mead'})
+        # x_opt = minimize(circlecost, [0.5, 0.5, 0.1], args=(coins,),
+        #                  method='COBYLA', bounds=[(0,1), (0,1), (0.01,0.2)],
+        #                  options={'rhobeg':[0.1, 0.1, 0.05]})
         print(x_opt)
         coins = drawcircle(coins, *(x_opt.x))
         cost = x_opt.fun
@@ -176,9 +173,7 @@ def main():
 
         
 if __name__ == "__main__":
-    print(cost_function([0.1, 0.2, 0.1], [1,1,1,1,1,1]))
     import sys
-    del sys.modules['python_example']
     t = time.process_time()
     main()
     elapsed_time = time.process_time() - t

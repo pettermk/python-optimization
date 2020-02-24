@@ -66,7 +66,7 @@ def cpp_flag(compiler):
 class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
     c_opts = {
-        'msvc': ['/EHsc'],
+        'msvc': ['/EHsc', '/O0'],
         'unix': [],
     }
     l_opts = {
@@ -92,6 +92,7 @@ class BuildExt(build_ext):
             opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
         for ext in self.extensions:
             ext.extra_compile_args = opts
+            # raise Exception(f"{ext.extra_compile_args}")
             ext.extra_link_args = link_opts
         build_ext.build_extensions(self)
 
