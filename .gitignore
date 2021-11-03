@@ -6,3 +6,4 @@
 *.out
 code/.idea/
 /**/env/
+/**/.ipynb*
