@@ -1,0 +1,9 @@
+imageio
+llvmlite
+numba
+numpy
+pybind11
+Pillow
+scipy
+jupyterlab
+matplotlib
